@@ -1,0 +1,53 @@
+<script src="2048.js"></script>
+<script>
+    let player;
+    function run() {
+        var mode = document.getElementById('mode');
+        var size = document.getElementById('size');
+        player = new Player2048(Number(size.value), Number(size.value), Number(mode.value));
+    }
+</script>
+<style>
+    body { overscroll-behavior: contain; }
+    .container { background: #F5F5F5; width: 100%; height: 100%; }
+    .container .header { margin: auto; width: 90%; padding-top: 10px; text-align: center; }
+    .container .option { margin: auto; width: 90%; padding-bottom: 2vh; text-align: center; }
+    .container .game { margin: auto; width: 90%; aspect-ratio: 1/1; }
+    .container .info { margin: auto; width: 90%; height: 6vh; padding-top: 2vh; }
+    .container .info .player { padding-top: 2%; height: 45%; padding-top: 0px; padding-left: 70%; display: flex; }
+    .container .info .player .pbox { height: 90%; aspect-ratio: 1/1; padding-right: 1vh; }
+    .container .info .player .player1 { width: 100%; height: 100%; fill: #B06000; }
+    .container .info .player .player2 { width: 100%; height: 100%; fill: #0060B0; }
+    table { border-collapse: collapse; width: 100%; height: 100%; border: 1px solid #ccc; text-align: center; font-size: 3vw; }
+    td { width: calc(100%/8); height: calc(100%/8); border: 1px solid #ccc; }
+    h3 { font-size: 5vh; }
+    p4 { line-height: 100%; font-size: 3vh; }
+    select { width: 20%; height: 3vh; font-size: 2vh; margin-right: 2vh; }
+    button { width: 20%; height: 3vh; font-size: 2vh; }
+</style>
+<body onload="run()">
+    <div class="container">
+        <div class="header">
+            <h3>2048PK</h3>
+        </div>
+        <div class="option">
+            <select id="mode">
+                <option value="0">pk</option>
+                <option value="1" selected="selected">com</option>
+            </select>
+            <select id="size">
+                <option value="4" selected="selected">4</option>
+                <option value="6">6</option>
+                <option value="8">8</option>
+            </select>
+            <button onclick="run()">start</button>
+        </div>
+        <div class="game">
+            <table id="box" cellpadding="0" cellspacing="0"></table>
+        </div>
+        <div class="info">
+            <div class="player"><svg class="pbox"><rect class="player1"/></svg><p4 id="p1s">0</p4></div>
+            <div class="player"><svg class="pbox"><rect class="player2"/></svg><p4 id="p2s">0</p4></div>
+        </div>
+    </div>
+</body>
