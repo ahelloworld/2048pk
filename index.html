@@ -4,7 +4,8 @@
     function run() {
         var mode = document.getElementById('mode');
         var size = document.getElementById('size');
-        player = new Player2048(Number(size.value), Number(size.value), Number(mode.value));
+        var level = document.getElementById('level');
+        player = new Player2048(Number(size.value), Number(size.value), Number(mode.value), Number(level.value));
     }
 </script>
 <style>
@@ -22,7 +23,7 @@
     td { width: calc(100%/8); height: calc(100%/8); border: 1px solid #ccc; }
     h3 { font-size: 5vh; }
     p4 { line-height: 100%; font-size: 3vh; }
-    select { width: 20%; height: 3vh; font-size: 2vh; margin-right: 2vh; }
+    select { width: 18%; height: 3vh; font-size: 2vh; margin-right: 1vw; }
     button { width: 20%; height: 3vh; font-size: 2vh; }
 </style>
 <body onload="run()">
@@ -39,6 +40,12 @@
                 <option value="4" selected="selected">4</option>
                 <option value="6">6</option>
                 <option value="8">8</option>
+            </select>
+            <select id="level">
+                <option value="1">easy</option>
+                <option value="4" selected="selected">normal</option>
+                <option value="6">hard</option>
+                <option value="12">very hard</option>
             </select>
             <button onclick="run()">start</button>
         </div>

@@ -1,5 +1,5 @@
 class Player2048 {
-    constructor(width, height, autoplay) {
+    constructor(width, height, autoplay, level) {
         this.#ut(0);
         this.#ut(1);
         this.box = document.getElementById('box');
@@ -9,6 +9,7 @@ class Player2048 {
         this.disable = false;
         this.width = width;
         this.height = height;
+        this.level = level;
         this.array = []
         for (var y = 0; y < height; y++) {
             let line = [];
@@ -33,8 +34,7 @@ class Player2048 {
     #doUtCalc(pi, arr1, arr2) {
         let pArr = [];
         arr1.forEach(e => pArr.push({pi: e[0], pv: e[1]}));
-        this.pi = pi;
-        this.#calcLine(pArr);
+        this.#calcLine(pi, pArr);
         for (var i = 0; i < pArr.length; i++) {
             if (pArr[i].pi != arr2[i][0] || pArr[i].pv != arr2[i][1]) {
                 console.log(`ut failed, pi ${pi}, test ${arr1}, out ${JSON.stringify(pArr)}, real ${arr2}`);
@@ -45,6 +45,8 @@ class Player2048 {
     #ut(pi) {
         let pio = pi == 1 ? 0 : 1; 
         this.#doUtCalc(pi, [[pi,2],[pi,2],[-1,0]],[[-1,0],[-1,0],[pi,4]]);
+        this.#doUtCalc(pi, [[pi,8],[pi,2],[pi,8]],[[pi,8],[pi,2],[pi,8]]);
+        this.#doUtCalc(pi, [[pi,2],[pi,4],[pi,2]],[[pi,2],[pi,4],[pi,2]]);
         this.#doUtCalc(pi, [[pi,2],[-1,0],[pi,2]],[[-1,0],[-1,0],[pi,4]]);
         this.#doUtCalc(pi, [[pi,2],[pio,2],[-1,0]],[[-1,0],[-1,0],[pi,4]]);
         this.#doUtCalc(pi, [[pi,2],[-1,0],[pio,2],[-1,0]],[[-1,0],[pi,2],[pio,2],[-1,0]]);
@@ -99,15 +101,15 @@ class Player2048 {
             let next = false;
             if (Math.abs(moveDistanceX) > Math.abs(moveDistanceY)) {
                 if (moveDistanceX > 0) {
-                    next = this.#left(this.array); 
+                    next = this.#left(this.pi, this.array); 
                 } else {
-                    next = this.#right(this.array);
+                    next = this.#right(this.pi, this.array);
                 }
             } else {
                 if (moveDistanceY > 0) {
-                    next = this.#up(this.array);
+                    next = this.#up(this.pi, this.array);
                 } else {
-                    next = this.#down(this.array);
+                    next = this.#down(this.pi, this.array);
                 }
             }
             if (next) {
@@ -122,10 +124,10 @@ class Player2048 {
         }
         let next = false;
         switch(evt.keyCode) {
-            case 37: next = this.#left(this.array); break;
-            case 38: next = this.#up(this.array); break;
-            case 39: next = this.#right(this.array); break;
-            case 40: next = this.#down(this.array); break;
+            case 37: next = this.#left(this.pi, this.array); break;
+            case 38: next = this.#up(this.pi, this.array); break;
+            case 39: next = this.#right(this.pi, this.array); break;
+            case 40: next = this.#down(this.pi, this.array); break;
             default:
                 return;
         }
@@ -164,7 +166,7 @@ class Player2048 {
             this.disable = false;
         }
     }
-    #up(array) {
+    #up(pi, array) {
         let rArray = []
         for (var x = 0; x < this.width; x++) {
             let line = []
@@ -173,9 +175,9 @@ class Player2048 {
             }
             rArray.push(line);
         }
-        return this.#calc(rArray);
+        return this.#calc(pi, rArray);
     }
-    #down(array) {
+    #down(pi, array) {
         let rArray = []
         for (var x = 0; x < this.width; x++) {
             let line = []
@@ -184,9 +186,9 @@ class Player2048 {
             }
             rArray.push(line);
         }
-        return this.#calc(rArray);
+        return this.#calc(pi, rArray);
     }
-    #left(array) {
+    #left(pi, array) {
         let rArray = []
         for (var y = 0; y < this.height; y++) {
             let line = []
@@ -195,9 +197,9 @@ class Player2048 {
             }
             rArray.push(line);
         }
-        return this.#calc(rArray);
+        return this.#calc(pi, rArray);
     }
-    #right(array) {
+    #right(pi, array) {
         let rArray = []
         for (var y = 0; y < this.height; y++) {
             let line = []
@@ -206,24 +208,24 @@ class Player2048 {
             }
             rArray.push(line);
         }
-        return this.#calc(rArray);
+        return this.#calc(pi, rArray);
     }
-    #calc(array) {
+    #calc(pi, array) {
         let change = 0;
-        array.forEach(element => change += this.#calcLine(element));
+        array.forEach(element => change += this.#calcLine(pi, element));
         return change > 0;
     }
-    #calcLine(element) {
+    #calcLine(pi, element) {
         let change = 0;
         let end = element.length-1;
         for (var x = element.length-2; x >= 0; x--) {
             let td = element[x];
-            if (td.pv == 0 || td.pi != this.pi) {
+            if (td.pv == 0 || td.pi != pi) {
                 continue;
             }
             let ntd = element[x+1];
             let noadd = false;
-            if (td.pv == ntd.pv && ntd.pi != this.pi) {
+            if (td.pv == ntd.pv && ntd.pi != pi) {
                 td.pv += ntd.pv;
                 ntd.pv = 0;
                 ntd.pi = -1;
@@ -232,7 +234,7 @@ class Player2048 {
             let s = end;
             for (var k = x; k <= s; k++) {
                 let ktd = element[k];
-                if (ktd.pv != 0 && ktd.pi != this.pi) {
+                if (ktd.pv != 0 && (ktd.pi != pi || ktd.pv != td.pv)) {
                     s = k-1;
                     break;
                 }
@@ -326,8 +328,8 @@ class Player2048 {
     }
     #showScore() {
         let r = this.#getScore(this.array);
-        document.getElementById("p1s").innerText = r[0];
-        document.getElementById("p2s").innerText = r[1];
+        document.getElementById('p1s').innerText = r[0];
+        document.getElementById('p2s').innerText = r[1];
     }
     #rgb(r, g, b) {
         return 'rgb(' + r + ',' + g + ',' + b + ')';
@@ -335,14 +337,14 @@ class Player2048 {
     #timeout(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
-    #getArray() {
+    #getArray(array) {
         let sArray = [];
         for (var y = 0; y < this.height; y++) {
             let subArray = [];
             for (var x = 0; x < this.width; x++) {
                 subArray.push({
-                    pi: this.array[y][x].pi,
-                    pv: this.array[y][x].pv,
+                    pi: array[y][x].pi,
+                    pv: array[y][x].pv,
                 });
             }
             sArray.push(subArray);
@@ -350,35 +352,53 @@ class Player2048 {
         return sArray;
     }
     #canNext() {
-        return this.#left(this.#getArray()) || this.#up(this.#getArray()) || this.#right(this.#getArray()) || this.#down(this.#getArray());
+        return this.#left(this.pi, this.#getArray(this.array)) || 
+            this.#up(this.pi, this.#getArray(this.array)) || 
+            this.#right(this.pi, this.#getArray(this.array)) || 
+            this.#down(this.pi, this.#getArray(this.array));
+    }
+    #getPkScore(pi, array) {
+        let s = this.#getScore(array);
+        let b = this.#getBlock(array);
+        let npi = pi == 0 ? 1 : 0;
+        return (s[pi] - s[npi]) * 4 - b[pi];
+    }
+    #doBestAction(pi, array, deep, peer) {
+        let r = {};
+        r[this.#doDeep(pi, array, this.#left.bind(this), deep, peer, true)] = this.#left.bind(this);
+        r[this.#doDeep(pi, array, this.#up.bind(this), deep, peer, true)] = this.#up.bind(this);
+        r[this.#doDeep(pi, array, this.#right.bind(this), deep, peer, true)] = this.#right.bind(this);
+        r[this.#doDeep(pi, array, this.#down.bind(this), deep, peer, true)] = this.#down.bind(this);
+        if (peer) {
+            console.log(r);
+        }
+        r[Math.max(...Object.keys(r))](pi, array);
+    }
+    #doDeep(pi, array, func, deep, peer, first) {
+        let sArray = this.#getArray(array);
+        if (!func(pi, sArray)) {
+            if (first) {
+                return -1000000;
+            }
+            return this.#getPkScore(pi, sArray);
+        }
+        if (peer) {
+            this.#doBestAction(pi == 0 ? 1 : 0, sArray, 1, false);
+        }
+        deep -= 1;
+        if (deep == 0) {
+            return this.#getPkScore(pi, array);
+        }
+        let r = [
+            this.#doDeep(pi, sArray, this.#left.bind(this), deep, true, false),
+            this.#doDeep(pi, sArray, this.#up.bind(this), deep, true, false),
+            this.#doDeep(pi, sArray, this.#right.bind(this), deep, true, false),
+            this.#doDeep(pi, sArray, this.#down.bind(this), deep, true, false),
+        ];
+        // console.log(`deep ${deep} do ${func.name} next ${r}`);
+        return Math.max(...r);
     }
     #comPlayerDo() {
-        let r = {};
-        let sArray = this.#getArray();
-        this.#left(sArray);
-        let s1 = this.#getScore(sArray);
-        let b1 = this.#getBlock(sArray);
-        // console.log(s1[1], s1[0], b1[1], b1[0]);
-        r[s1[1] - s1[0] - b1[1]] = () => this.#left(this.array);
-        sArray = this.#getArray();
-        this.#up(sArray);
-        let s2 = this.#getScore(sArray);
-        let b2 = this.#getBlock(sArray);
-        // console.log(s2[1], s2[0], b2[1], b2[0]);
-        r[s2[1] - s2[0] - b2[1]] = () => this.#up(this.array);
-        sArray = this.#getArray();
-        this.#right(sArray);
-        let s3 = this.#getScore(sArray);
-        let b3 = this.#getBlock(sArray);
-        // console.log(s3[1], s3[0], b3[1], b3[0]);
-        r[s3[1] - s3[0] - b3[1]] = () => this.#right(this.array);
-        sArray = this.#getArray();
-        this.#down(sArray);
-        let s4 = this.#getScore(sArray);
-        let b4 = this.#getBlock(sArray);
-        // console.log(s4[1], s4[0], b4[1], b4[0]);
-        r[s4[1] - s4[0] - b4[1]] = () => this.#down(this.array);
-        // console.log(r);
-        r[Math.max(...Object.keys(r))]();
+        this.#doBestAction(this.pi, this.array, this.level, true);
     }
 }
