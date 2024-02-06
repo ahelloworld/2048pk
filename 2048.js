@@ -73,6 +73,7 @@ class Player2048 {
         }
         let sel = empty.sort(() => 0.5 - Math.random()).slice(0, count);
         for (var i = 0; i < sel.length; i++) {
+            sel[i].add = 1;
             sel[i].pv = 2;
             sel[i].pi = this.pi;
         }
@@ -230,6 +231,7 @@ class Player2048 {
                 ntd.pv = 0;
                 ntd.pi = -1;
                 noadd = true;
+                change = 1;
             }
             let s = end;
             for (var k = x; k <= s; k++) {
@@ -274,6 +276,14 @@ class Player2048 {
         for (var y = 0; y < this.height; y++) {
             for (var x = 0; x < this.width; x++) {
                 let td = this.array[y][x];
+                if (td.add == 1) {
+                    td.style.borderColor = this.#rgb(0x20, 0x80, 0x20);
+                    td.style.borderWidth = 4;
+                    td.add = 0;
+                } else {
+                    td.style.borderColor = this.#rgb(0xC0, 0xC0, 0xC0);
+                    td.style.borderWidth = 1;
+                }
                 if (td.pv == 0) {
                     td.innerText = '0';
                     td.style.color = td.style.backgroundColor = this.#rgb(0xFF, 0xFF, 0xFF);
@@ -363,14 +373,18 @@ class Player2048 {
         let npi = pi == 0 ? 1 : 0;
         return (s[pi] - s[npi]) * 4 - b[pi];
     }
-    #doBestAction(pi, array, deep, peer) {
+    #doBestAction(pi, array, deep, peer, show) {
         let r = {};
-        r[this.#doDeep(pi, array, this.#left.bind(this), deep, peer, true)] = this.#left.bind(this);
-        r[this.#doDeep(pi, array, this.#up.bind(this), deep, peer, true)] = this.#up.bind(this);
-        r[this.#doDeep(pi, array, this.#right.bind(this), deep, peer, true)] = this.#right.bind(this);
-        r[this.#doDeep(pi, array, this.#down.bind(this), deep, peer, true)] = this.#down.bind(this);
-        if (peer) {
-            console.log(r);
+        let k1 = this.#doDeep(pi, array, this.#left.bind(this), deep, peer, true);
+        r[k1] = this.#left.bind(this);
+        let k2 = this.#doDeep(pi, array, this.#up.bind(this), deep, peer, true);
+        r[k2] = this.#up.bind(this);
+        let k3 = this.#doDeep(pi, array, this.#right.bind(this), deep, peer, true);
+        r[k3] = this.#right.bind(this);
+        let k4 = this.#doDeep(pi, array, this.#down.bind(this), deep, peer, true);
+        r[k4] = this.#down.bind(this);
+        if (show) { 
+            console.log(`left: ${k1}, up: ${k2}, right: ${k3}, down: ${k4}`); 
         }
         r[Math.max(...Object.keys(r))](pi, array);
     }
@@ -383,11 +397,11 @@ class Player2048 {
             return this.#getPkScore(pi, sArray);
         }
         if (peer) {
-            this.#doBestAction(pi == 0 ? 1 : 0, sArray, 1, false);
+            this.#doBestAction(pi == 0 ? 1 : 0, sArray, 1, false, false);
         }
         deep -= 1;
         if (deep == 0) {
-            return this.#getPkScore(pi, array);
+            return this.#getPkScore(pi, sArray);
         }
         let r = [
             this.#doDeep(pi, sArray, this.#left.bind(this), deep, true, false),
@@ -399,6 +413,8 @@ class Player2048 {
         return Math.max(...r);
     }
     #comPlayerDo() {
-        this.#doBestAction(this.pi, this.array, this.level, true);
+        this.#doBestAction(this.pi, this.array, this.level, true, false);
+        // let sArray = this.#getArray(this.array);
+        // this.#doBestAction(this.pi == 0 ? 1 : 0, sArray, 1, false, true);
     }
 }
