@@ -1,7 +1,7 @@
 class Player2048 {
     constructor(width, height, autoplay, level) {
-        this.#ut(0);
-        this.#ut(1);
+        // this.#ut(0);
+        // this.#ut(1);
         this.box = document.getElementById('box');
         this.box.innerHTML = '';
         this.pi = 0;
@@ -24,7 +24,7 @@ class Player2048 {
             this.box.appendChild(tr);
             this.array.push(line);
         }
-        this.#fillMap(2);
+        this.#fillMap(this.array, 2);
         this.#show();
         this.#listenTouchEvent();
         document.onkeydown = event => { 
@@ -57,11 +57,11 @@ class Player2048 {
         this.#doUtCalc(pi, [[pi,2],[pio,4],[pi,4],[-1,0],[pi,2],[pi,2],[-1,0]],[[pi,2],[pio,4],[-1,0],[-1,0],[-1,0],[pi,4],[pi,4]]);
         this.#doUtCalc(pi, [[pi,2],[pi,4],[pi,2],[pio,2]],[[-1,0],[pi,2],[pi,4],[pi,4]]);
     }
-    #fillMap(count) {
+    #fillMap(array, count) {
         let empty = [];
         for (var y = 0; y < this.height; y++) {
             for (var x = 0; x < this.width; x++) {
-                let td = this.array[y][x];
+                let td = array[y][x];
                 if (td.pv != 0) {
                     continue;
                 }
@@ -149,18 +149,18 @@ class Player2048 {
     }
     async #nextWait() {
         this.#show();
-        await this.#timeout(500);
+        await this.#timeout(10);
         this.pi = this.pi == 0 ? 1 : 0;
         this.#show();
-        await this.#timeout(500);
-        this.#fillMap(2); 
+        await this.#timeout(10);
+        this.#fillMap(this.array, 2);
         this.#show();
         if (!this.#canNext()) {
             this.#gameEnd();
             return;
         }
-        if (this.autoplay && this.pi == 1) {
-            await this.#timeout(500);
+        if ((this.autoplay > 0 && this.pi == 1) || (this.autoplay > 1 && this.pi == 0)) {
+            await this.#timeout(10);
             this.#comPlayerDo();
             await this.#nextWait();
         } else {
@@ -256,7 +256,7 @@ class Player2048 {
                     ktd.pv += td.pv;
                     ktd.pi = td.pi;
                     td.pv = 0;
-                    td.pi = -1;
+                    td.pi = -1;
                     end = k-1;
                     change = 1;
                 }
@@ -373,48 +373,59 @@ class Player2048 {
         let npi = pi == 0 ? 1 : 0;
         return (s[pi] - s[npi]) * 4 - b[pi];
     }
-    #doBestAction(pi, array, deep, peer, show) {
+    #doBestAction(n, pi, array, peer) {
         let r = {};
-        let k1 = this.#doDeep(pi, array, this.#left.bind(this), deep, peer, true);
-        r[k1] = this.#left.bind(this);
-        let k2 = this.#doDeep(pi, array, this.#up.bind(this), deep, peer, true);
-        r[k2] = this.#up.bind(this);
-        let k3 = this.#doDeep(pi, array, this.#right.bind(this), deep, peer, true);
-        r[k3] = this.#right.bind(this);
-        let k4 = this.#doDeep(pi, array, this.#down.bind(this), deep, peer, true);
-        r[k4] = this.#down.bind(this);
-        if (show) { 
-            console.log(`left: ${k1}, up: ${k2}, right: ${k3}, down: ${k4}`); 
-        }
+
+        let f1 = this.#left.bind(this);
+        let k1 = this.#doStepN(n, pi, array, f1, peer);
+        r[k1] = f1;
+
+        let f2 = this.#up.bind(this);
+        let k2 = this.#doStepN(n, pi, array, f2, peer);
+        r[k2] = f2;
+
+        let f3 = this.#right.bind(this);
+        let k3 = this.#doStepN(n, pi, array, f3, peer);
+        r[k3] = f3;
+
+        let f4 = this.#down.bind(this);
+        let k4 = this.#doStepN(n, pi, array, f4, peer);
+        r[k4] = f4;
+
+        // console.log(`left: ${k1}, up: ${k2}, right: ${k3}, down: ${k4}`); 
         r[Math.max(...Object.keys(r))](pi, array);
     }
-    #doDeep(pi, array, func, deep, peer, first) {
+    #doStepN(n, pi, array, func, peer) {
+        let k = 0;
+        for (var i = 0; i < n; i++) {
+            let p = this.#doStep(pi, array, func, peer);
+            k += p;
+            if (p == -1000000) {
+                break;
+            }
+        }
+        return k;
+    }
+    #doStep(pi, array, func, peer) {
         let sArray = this.#getArray(array);
         if (!func(pi, sArray)) {
-            if (first) {
-                return -1000000;
-            }
-            return this.#getPkScore(pi, sArray);
+            return -1000000;
         }
         if (peer) {
-            this.#doBestAction(pi == 0 ? 1 : 0, sArray, 1, false, false);
+            this.#fillMap(sArray, 2);
+            this.#doBestAction(1, pi == 0 ? 1 : 0, sArray, false);
         }
-        deep -= 1;
-        if (deep == 0) {
-            return this.#getPkScore(pi, sArray);
-        }
-        let r = [
-            this.#doDeep(pi, sArray, this.#left.bind(this), deep, true, false),
-            this.#doDeep(pi, sArray, this.#up.bind(this), deep, true, false),
-            this.#doDeep(pi, sArray, this.#right.bind(this), deep, true, false),
-            this.#doDeep(pi, sArray, this.#down.bind(this), deep, true, false),
-        ];
-        // console.log(`deep ${deep} do ${func.name} next ${r}`);
-        return Math.max(...r);
+        return this.#getPkScore(pi, sArray);
     }
     #comPlayerDo() {
-        this.#doBestAction(this.pi, this.array, this.level, true, false);
-        // let sArray = this.#getArray(this.array);
-        // this.#doBestAction(this.pi == 0 ? 1 : 0, sArray, 1, false, true);
+        if (this.level == 0) {
+            this.#doBestAction(1, this.pi, this.array, false);
+        } else if (this.level == 1) {
+            this.#doBestAction(1, this.pi, this.array, true);
+        } else if (this.level == 2) {
+            this.#doBestAction(4, this.pi, this.array, true);
+        } else {
+            this.#doBestAction(8, this.pi, this.array, true);
+        }
     }
 }
