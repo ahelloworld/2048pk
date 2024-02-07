@@ -256,7 +256,7 @@ class Player2048 {
                     ktd.pv += td.pv;
                     ktd.pi = td.pi;
                     td.pv = 0;
-                    td.pi = -1;
+                    td.pi = -1;
                     end = k-1;
                     change = 1;
                 }
